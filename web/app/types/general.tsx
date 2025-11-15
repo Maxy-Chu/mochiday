@@ -18,6 +18,12 @@ export type Config = {
   dashboardNavItems: NavItem[];
 };
 
+// MX ADDED
+export type SelectOption = {
+  value: string;
+  label: string;
+};
+
 export enum SideBarType {
   JOBS = "jobs",
   APPLICATIONS = "applications",
@@ -35,7 +41,18 @@ export enum JobRowType {
   ACTION_REQUIRED = "action_required",
 }
 
+// MX ADDED
+export enum JobSeniority {
+  INTERN = "intern",
+  NEWGRAD = "newgrad",
+  JUNIOR = "junior",
+  MID = "mid",
+  SENIOR = "senior",
+}
+
 export type JobExtended = Job & {
   applied: boolean;
   applied_at?: string;
 };
+
+

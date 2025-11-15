@@ -10,50 +10,68 @@ import GeneralDashboardLayout from "~/components/GeneralDashboardLayout";
 import { Job, JobExtended, SideBarType } from "~/types/general";
 import { DashboardContext } from "./dashboard";
 import { getAuth } from "@clerk/remix/ssr.server";
+import { fakeAppliedJobs } from "~/components/applications/FakeAppliedJobs";
 
 export const loader: LoaderFunction = async (args) => {
-  const { userId } = await getAuth(args);
-  const supabase = args.context.supabase();
+  /* test */
+  const url = new URL(args.request.url);
+  const seniority = url.searchParams.get("seniority") || "all";
 
-  const pageNumberString = new URL(args.request.url).searchParams.get("page");
-  const pageNumber = parseInt(pageNumberString ?? "1");
+  const pageNumber = 1;
+  const pagesRequired = 1;
 
-  const totalJobs = await supabase
-    .from("jobs")
-    .select("*", { count: "exact", head: true });
+  let jobs = fakeAppliedJobs;
+  // TODO: Create Job seniority labels
+  // if (seniority !== "all") {
+  //   jobs = fakeAppliedJobs.filter(job => {
+  //     return job.seniority === seniority;
+  //   });
+  // }
 
-  const pagesRequired = Math.ceil(totalJobs.count! / 20);
+  return json({ pageNumber, pagesRequired, jobs });
 
-  const result = await supabase
-    .from("jobs")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .range((pageNumber - 1) * 20, pageNumber * 20 - 1);
-  const jobs = result.data as Job[];
-  const response = [] as JobExtended[];
-  response.push(
-    ...jobs.map((job) => {
-      return {
-        ...job,
-        applied: false,
-      };
-    })
-  );
+  // const { userId } = await getAuth(args);
+  // const supabase = args.context.supabase();
 
-  if (userId) {
-    const appliedJobsResult = await supabase
-      .from("applications")
-      .select("*")
-      .eq("user_id", userId);
-    const appliedJobs = appliedJobsResult.data;
-    const appliedJobUrls = (appliedJobs ?? []).map((job) => job.job_url);
-    response.forEach((job) => {
-      if (appliedJobUrls.includes(job.job_url)) {
-        job.applied = true;
-      }
-    });
-  }
-  return json({ pageNumber, pagesRequired, jobs: response });
+  // const pageNumberString = new URL(args.request.url).searchParams.get("page");
+  // const pageNumber = parseInt(pageNumberString ?? "1");
+
+  // const totalJobs = await supabase
+  //   .from("jobs")
+  //   .select("*", { count: "exact", head: true });
+
+  // const pagesRequired = Math.ceil(totalJobs.count! / 20);
+
+  // const result = await supabase
+  //   .from("jobs")
+  //   .select("*")
+  //   .order("created_at", { ascending: false })
+  //   .range((pageNumber - 1) * 20, pageNumber * 20 - 1);
+  // const jobs = result.data as Job[];
+  // const response = [] as JobExtended[];
+  // response.push(
+  //   ...jobs.map((job) => {
+  //     return {
+  //       ...job,
+  //       applied: false,
+  //     };
+  //   })
+  // );
+
+  // if (userId) {
+  //   const appliedJobsResult = await supabase
+  //     .from("applications")
+  //     .select("*")
+  //     .eq("user_id", userId);
+  //   const appliedJobs = appliedJobsResult.data;
+  //   const appliedJobUrls = (appliedJobs ?? []).map((job) => job.job_url);
+  //   response.forEach((job) => {
+  //     if (appliedJobUrls.includes(job.job_url)) {
+  //       job.applied = true;
+  //     }
+  //   });
+  // }
+  // return json({ pageNumber, pagesRequired, jobs: response });
 };
 
 export default function DashboardJobs() {

@@ -1,4 +1,4 @@
-import { Link, useLocation } from "@remix-run/react";
+import { Link, useLocation, useNavigate } from "@remix-run/react";
 import NavItems from "./NavItems";
 import MochiDayLogo from "~/assets/img/logo.svg";
 import NextBatchCountdown from "../NextBatchCountdown";
@@ -8,10 +8,25 @@ import { UserButton } from "@clerk/remix";
 import { IconConfetti, IconConfettiOff } from "@tabler/icons-react";
 import { NavItem } from "./NavItem";
 import { PartyModeExplainerModal } from "../fresh-jobs/modals/PartyModeExplainerModal";
+import { SENIORITY_OPTIONS } from "~/config/filter";
 
 export function DashboardNavBar() {
   const location = useLocation();
+  const navigate = useNavigate(); // MX ADD
   const dashboardContext = useContext(DashboardContext);
+
+  /* START OF MX ADDED */
+  const params = new URLSearchParams(location.search);
+  const seniority = params.get("seniority") || "all";
+
+  // Handle Func for page change when select a new seniority
+  const handleSeniorityChange = (newSeniority: string) => {
+    const newParams = new URLSearchParams(location.search);
+    newParams.set("seniority", newSeniority);
+    newParams.set("page", "1");
+    navigate(`?${newParams.toString()}`);
+  };
+  /* END OF MX ADDED */
 
   return (
     <aside
@@ -52,7 +67,29 @@ export function DashboardNavBar() {
             What is this?
           </div>
           <PartyModeExplainerModal modelId="fun-mode" />
+
+          {/* Start of Seniority Filter */}
+          <div className="px-4 mt-4">
+            <label htmlFor="seniority" className="font-bold text-sm">
+              Seniority
+            </label>
+            <select
+              id="seniority"
+              value={seniority}
+              onChange={(e) => handleSeniorityChange(e.target.value)}
+              className="w-full mt-1 p-1 border rounded"
+            >
+              {SENIORITY_OPTIONS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {/* End of Seniority Filter */}
+
         </div>
+
 
         <>
           {!dashboardContext.userId ? (
