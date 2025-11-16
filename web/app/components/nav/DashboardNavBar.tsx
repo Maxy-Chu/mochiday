@@ -77,10 +77,10 @@ export function DashboardNavBar() {
               id="seniority"
               value={seniority}
               onChange={(e) => handleSeniorityChange(e.target.value)}
-              className="w-full mt-1 p-1 border rounded"
+              className="w-full mt-1 p-1 border-black border-2 bg-[#FFCA40] rounded-xl text-sm font-semibold "
             >
               {SENIORITY_OPTIONS.map((item) => (
-                <option key={item.value} value={item.value}>
+                <option key={item.value} value={item.value} className="text-sm font-semibold">
                   {item.label}
                 </option>
               ))}

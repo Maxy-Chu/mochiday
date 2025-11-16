@@ -14,6 +14,7 @@ export const fakeAppliedJobs: JobExtended[] = [
     job_url:
       "https://jobs.lever.co/plaid/bba0ed4f-6c59-4151-909c-947a1fcdd347/apply",
     created_at: "2024-04-10 12:01:13.567348+00",
+    seniority: "mid",
   },
   {
     id: 2,
@@ -28,6 +29,7 @@ export const fakeAppliedJobs: JobExtended[] = [
     job_url:
       "https://jobs.lever.co/Anthropic/d3b2197f-cb94-4e6b-8161-80df614d0b99/apply",
     created_at: "2024-04-10 12:01:13.567348+00",
+    seniority: "newgrad",
   },
   {
     id: 3,
@@ -42,5 +44,6 @@ export const fakeAppliedJobs: JobExtended[] = [
     job_url:
       "https://jobs.lever.co/zoox/964c7a8f-b7ca-48d2-aace-04a49ca24f9d/apply",
     created_at: "2024-04-10 12:01:13.567348+00",
+    seniority: "senior",
   },
 ];

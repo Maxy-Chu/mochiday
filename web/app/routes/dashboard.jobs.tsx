@@ -22,11 +22,11 @@ export const loader: LoaderFunction = async (args) => {
 
   let jobs = fakeAppliedJobs;
   // TODO: Create Job seniority labels
-  // if (seniority !== "all") {
-  //   jobs = fakeAppliedJobs.filter(job => {
-  //     return job.seniority === seniority;
-  //   });
-  // }
+  if (seniority !== "all") {
+    jobs = fakeAppliedJobs.filter(job => {
+      return job.seniority === seniority;
+    });
+  }
 
   return json({ pageNumber, pagesRequired, jobs });
 
