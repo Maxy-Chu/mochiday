@@ -5,7 +5,8 @@ from enum import Enum
 import yagooglesearch
 import re
 import logging
-from server.model.entry import TinyBERT
+import seniority_filter
+from model.entry import TinyBERT
 
 
 class JobSite(Enum):
@@ -84,22 +85,26 @@ def get_lever_job_details(link: str) -> list[str]:
     if ("engineer" or "developer") not in position.lower():
         return ["Not found – 404 error", "Unknown", None]
 
-    # MX ADDED
-    description_div = soup.find(
-        "div", class_="posting-body"
-    )  # Change based on actual HTML
-    job_description = (
-        description_div.get_text(" ", strip=True) if description_div else ""
-    )
-    # END OF MX ADDED
-
     img = soup.find("img")
     if img and img["src"] and img["src"] != "/img/lever-logo-full.svg":
         img_url = img["src"]
     else:
         img_url = None
 
-    return [company_name, position, img_url, job_description]
+    # MX ADDED:
+    # TODO: need a new link to get job requirement, finding out solutions
+    job_des_tags = soup.find("div", class_="content")
+    years = None
+    salary = None
+    req = None
+    if job_des_tags:
+        years = seniority_filter.lever_filter.find_years(job_des_tags)
+        salary = seniority_filter.lever_filter.find_salary(job_des_tags)
+        req = seniority_filter.lever_filter.find_requirements(job_des_tags)
+    seniority = [years, salary, req]
+    # END OF MX ADDED
+
+    return [company_name, position, img_url, seniority]  # MX ADDED: seniority
 
 
 def get_greenhouse_job_details(link: str) -> list[str]:
@@ -113,15 +118,6 @@ def get_greenhouse_job_details(link: str) -> list[str]:
         else "Unknown"
     )
 
-    # MX ADDED
-    description_div = soup.find(
-        "div", class_="posting-body"
-    )  # Change based on actual HTML
-    job_description = (
-        description_div.get_text(" ", strip=True) if description_div else ""
-    )
-    # END OF MX ADDED
-
     image = (
         head.find("meta", property="og:image")["content"]
         if head.find("meta", property="og:image")
@@ -134,7 +130,21 @@ def get_greenhouse_job_details(link: str) -> list[str]:
     title = soup.title.string if soup.title else "Unknown"
 
     company_name = title.split(" at ")[1].strip() if " at " in title else title.strip()
-    return [company_name, position, image, job_description]
+
+    # MX ADDED
+    # TODO: need a new link to get job requirement, finding out solutions
+    job_des_tags = soup.find("div", class_="content")
+    years = None
+    salary = None
+    req = None
+    if job_des_tags:
+        years = seniority_filter.lever_filter.find_years(job_des_tags)
+        salary = seniority_filter.lever_filter.find_salary(job_des_tags)
+        req = seniority_filter.lever_filter.find_requirements(job_des_tags)
+    seniority = [years, salary, req]
+    # END OF MX ADDED
+
+    return [company_name, position, image, seniority]  # MX ADDED: seniority
 
 
 def get_ashby_job_details(link: str) -> list[str]:
@@ -146,22 +156,26 @@ def get_ashby_job_details(link: str) -> list[str]:
     company_name = title.split(" @ ")[1].strip() if " @ " in title else title.strip()
     position = title.split(" @ ")[0].strip() if " @ " in title else "Unknown"
 
-    # MX ADDED
-    description_div = soup.find(
-        "div", class_="posting-body"
-    )  # Change based on actual HTML
-    job_description = (
-        description_div.get_text(" ", strip=True) if description_div else ""
-    )
-    # END OF MX ADDED
-
     image = (
         head.find("meta", property="og:image")["content"]
         if head.find("meta", property="og:title")
         else None
     )
 
-    return [company_name, position, image, job_description]
+    # MX ADDED
+    # TODO: need a new link to get job requirement, finding out solutions
+    job_des_tags = soup.find("div", class_="content")
+    years = None
+    salary = None
+    req = None
+    if job_des_tags:
+        years = seniority_filter.lever_filter.find_years(job_des_tags)
+        salary = seniority_filter.lever_filter.find_salary(job_des_tags)
+        req = seniority_filter.lever_filter.find_requirements(job_des_tags)
+    seniority = [years, salary, req]
+    # END OF MX ADDED
+
+    return [company_name, position, image, seniority]  # MX ADDED: seniority
 
 
 def handle_job_insert(supabase: any, job_urls: list[str], job_site: JobSite):
@@ -186,7 +200,7 @@ def handle_job_insert(supabase: any, job_urls: list[str], job_site: JobSite):
             job["image"] = job_details[2]
             job["job_url"] = link
             job["job_board"] = job_site.name
-            job["seniority"] = classifier.classify(job_details[1], job_details[3])
+            job["seniority"] = classifier.classify(job_details[3])
             print("Inserting job: ", job)
             supabase.insert_job(job)
         except Exception as e:
