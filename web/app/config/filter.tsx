@@ -5,6 +5,6 @@ export const SENIORITY_OPTIONS: SelectOption[] = [
     { value: JobSeniority.INTERN, label: "Intern" },
     { value: JobSeniority.NEWGRAD, label: "New Grad" },
     { value: JobSeniority.JUNIOR, label: "Junior" },
-    { value: JobSeniority.MID, label: "Mid (2–5 YOE)" },
-    { value: JobSeniority.SENIOR, label: "Senior (5+ YOE)" },
+    { value: JobSeniority.MID, label: "Mid (3–6 YOE)" },
+    { value: JobSeniority.SENIOR, label: "Senior (6+ YOE)" },
 ];
