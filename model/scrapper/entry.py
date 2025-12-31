@@ -25,7 +25,7 @@ def find_jobs_googleAPI(
     keyword: str,
     job_sites: list[JobSite],
     tbs: TBS | None = None,
-    max_results: int = 50,
+    max_results: int = 5,
 ):
     """
     Use Google Custom Search API to find job URLs。
@@ -40,13 +40,9 @@ def find_jobs_googleAPI(
         "key": secrets.GOOGLE_API_KEY,
         "cx": secrets.GOOGLE_CSE_ID,
         "q": search_query,
-        "num": max_results,
+        "num": min(10, max_results),
         "dateRestrict": tbs, 
     }
-
-    if tbs:
-        # Google CSE dateRestrict format: 'd1' last 1 day, 'd7' last 1 week
-        params["dateRestrict"] = tbs.value
 
     result_urls = []
     start_index = 1
@@ -113,13 +109,13 @@ def perform_task():
     job_urls_by_board = find_jobs_googleAPI(
         COMPREHENSIVE_SOFTWARE_ENGINEER_QUERY,
         [JobSite.LEVER, JobSite.GREENHOUSE, JobSite.ASHBY],
-        TBS.PAST_WEEK,
-        5,
+        TBS.PAST_MONTH,
+        80,
     )
     if not job_urls_by_board:
         print("No jobs found.")
         return
-    with open("./model/data/dataset1.csv", "a", newline="", encoding="utf-8") as f:
+    with open("./model/data/dataset2.csv", "a", newline="", encoding="utf-8") as f:
         fieldnames = ["company", "job_title", "image", "job_url", "job_board", "seniority"]
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         for job_board, job_urls in job_urls_by_board.items():

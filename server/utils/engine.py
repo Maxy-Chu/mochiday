@@ -90,7 +90,7 @@ def get_lever_job_details(link: str) -> list[str]:
         img_url = ""
 
     # MX ADDED:
-    seniority = seniority_filter.entry(title, response.text)
+    seniority = seniority_filter.entry(title, soup)
 
     return [company_name, position, img_url, seniority]  # MX ADDED: seniority
 
@@ -117,7 +117,7 @@ def get_greenhouse_job_details(link: str) -> list[str]:
     company_name = title.split(" at ")[1].strip() if " at " in title else title.strip()
 
     # MX ADDED:
-    seniority = seniority_filter.entry(title, response.text)
+    seniority = seniority_filter.entry(title, soup)
 
     return [company_name, position, image, seniority]  # MX ADDED: seniority
 
@@ -138,7 +138,7 @@ def get_ashby_job_details(link: str) -> list[str]:
     )
 
     # MX ADDED:
-    seniority = seniority_filter.entry(title, response.text)
+    seniority = seniority_filter.entry(title, soup)
 
     return [company_name, position, image, seniority]  # MX ADDED: seniority
 

@@ -2,10 +2,10 @@ import re
 
 SENIORITY_KEYWORDS = {
     "intern": ["intern", "internship", "co-op", "coop"],
-    "newgrad": ["new grad", "newgrad", "entry level", "recent graduate", "graduate", "campus"],
-    "junior": ["junior", "associate", "level i", "level 1", "early career"],
-    "mid": ["mid", "mid-level", "intermediate", "level ii", "level 2", "experienced"],
-    "senior": ["senior", "staff", "principal", "lead", "level iii", "level 3", "level iv", "level 4"],
+    "newgrad": ["new grad", "ng", "newgrad", "entry level", "graduate", "campus"],
+    "junior": ["junior", "jr", "associate", "level i", "level 1", "early career", "neer i", "l3", "l4"],
+    "mid": ["mid", "mid-level", "intermediate", "level ii", "level 2", "experienced", "neer ii", "iii", "l5"],
+    "senior": ["senior", "sr" ,"staff", "principal", "lead", "level iii", "level 3", "level iv", "iv", "level 4", "l6", "l7"],
 }
 
 def title_filter(title: str):
@@ -13,8 +13,8 @@ def title_filter(title: str):
     if not title:
         return None
     title_lower = title.lower()
-    priority_order = ["intern", "newgrad", "junior", "mid", "senior"]
-    for seniority in priority_order:
+    keywords = ["intern", "newgrad", "junior", "mid", "senior"]
+    for seniority in keywords:
         for keyword in SENIORITY_KEYWORDS[seniority]:
             if keyword in title_lower:
                 return seniority
@@ -23,55 +23,65 @@ def title_filter(title: str):
 def year_filter(html_text: str):
     """FILTER LEVEL 2: FIND YOE IN CONTENT"""
     html_text = re.sub(r'\s+', ' ', html_text)
-    search_text = html_text.lower()
-    number_words = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
-    years_patterns = [
-    # 1. 1 year / 1+ years
-    re.compile(rf'\b({number_words})\+?\s*years?\b', re.IGNORECASE),
 
-    # 2. 1-2 years / 1 – 2 years
-    re.compile(rf'\b({number_words})\s*[-–—]\s*({number_words})\s*years?\b', re.IGNORECASE),
+    # ---------- keywords ----------
+    keywords = [
+        "experience", "yoe", "qualification", "require"
+    ]
+    keyword_pattern = re.compile(
+        r'(' + '|'.join(map(re.escape, keywords)) + r')',
+        re.IGNORECASE
+    )
 
-    # 3. one to two years / one plus years
-    re.compile(rf'\b({number_words})\s*(to|plus)\s*({number_words})\s*years?\b', re.IGNORECASE),
-
-    # 4. experience of 1 year / experience: one year
-    re.compile(rf'experience(?:\s*of|\s*[:])?\s*({number_words})\s*years?', re.IGNORECASE),
-
-    # 5. experience 1-2 years
-    re.compile(rf'experience\s*({number_words})\s*[-–—]\s*({number_words})\s*years?', re.IGNORECASE),
-]
-    
-    for pattern in years_patterns:
-        matches = re.findall(pattern, search_text, re.IGNORECASE)
-        for match in matches:
-            if isinstance(match, tuple):
-                try:
-                    min_years = int(match[0])
-                    return _map_years_to_seniority(min_years)
-                except:
-                    continue
-            else:
-                try:
-                    years = int(match)
-                    return _map_years_to_seniority(years)
-                except:
-                    continue
-    
-    # 2. text years: e.g. three years
+    # ---------- number mapping ----------
     text_numbers = {
-        'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
-        'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
-        'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14,
-        'fifteen': 15
+        'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4,
+        'five': 5, 'six': 6, 'seven': 7, 'eight': 8,
+        'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12,
+        'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+        'several': 3, 'few': 3,
     }
-    
-    text_pattern = r'(' + '|'.join(text_numbers.keys()) + r')\s+years?'
-    text_match = re.search(text_pattern, search_text, re.IGNORECASE)
-    if text_match:
-        years = text_numbers.get(text_match.group(1).lower(), 0)
-        return _map_years_to_seniority(years)
-    
+
+    number_words = '|'.join(text_numbers.keys())
+
+    # ---------- year patterns ----------
+    years_pattern = re.compile(
+        rf'(?:'
+        rf'(\d+)\+?\s*years?'                            # 1 / 1+ years
+        rf'|'
+        rf'(\d+)\s*[-–—]\s*(\d+)\s*years?'               # 1-2 years
+        rf'|'
+        rf'({number_words})\+?\s*years?'                 # one / one+ years
+        rf'|'
+        rf'({number_words})\s*[-–—]\s*({number_words})\s*years?'  # one-two years
+        rf'|'
+        rf'({number_words})\s*(?:to|plus)\s*({number_words})\s*years?' # one to two years
+        rf')',
+        re.IGNORECASE
+    )
+
+    # ---------- search near keywords ----------
+    for m in keyword_pattern.finditer(html_text):
+        pos = m.start()
+        segment = html_text[max(0, pos - 150): pos + 300]
+
+        y_match = years_pattern.search(segment)
+        if not y_match:
+            continue
+
+        groups = y_match.groups()
+
+        # numeric
+        if groups[0]:
+            return _map_years_to_seniority(int(groups[0]))
+        if groups[1] and groups[2]:
+            return _map_years_to_seniority(int(groups[1]))
+
+        # text numbers
+        for g in groups:
+            if g and g.lower() in text_numbers:
+                return _map_years_to_seniority(text_numbers[g.lower()])
+
     return None
 
 def _map_years_to_seniority(years):
@@ -104,7 +114,7 @@ def find_salary(html_text: str):
         r')?',
         re.VERBOSE
     )
-    keywords = ["compensation", "salary", "wage", "hour", "annual", "month", "pay"]
+    keywords = ["compensation", "salary", "wage", "hour", "annual", "month"]
     keyword_pattern = re.compile(
         r'(' + '|'.join(map(re.escape, keywords)) + r')',
         re.IGNORECASE
@@ -116,13 +126,32 @@ def find_salary(html_text: str):
         segment = html_text[max(0, pos-150): pos+300]
         money_match = money_pattern.search(segment)
         if money_match:
-            results.append(money_match.group().strip())
+            item = money_match.group().strip()
+            if _is_valid_money(item):
+                results.append(item)
 
     if not results: 
         return "Unknown"
     return list(set(results))[0]
 
-def entry(title, html_text):
+def _is_valid_money(item):
+    MIN_SALARY = 100
+    MAX_SALARY = 2000000
+    try:
+        parts = re.split(r'[-–—]', item)
+        value = parts[0].upper().replace("USD", "").replace("$", "").strip()
+        multiplier = 1
+        if value.endswith("K"):
+            multiplier = 1000
+            value = value[:-1]
+        value = value.replace(",", "")
+        amount = float(value) * multiplier
+        return MIN_SALARY <= amount <= MAX_SALARY
+    except Exception:
+        return False
+
+def entry(title, soup):
+    html_text = soup.get_text(separator=" ", strip=True)
     level_1 = title_filter(title)
     if level_1:
         return level_1
